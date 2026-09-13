@@ -1,0 +1,63 @@
+# k8s/redis-deployment.yaml
+#
+# Redis in-cluster Deployment for the feature-flag-service.
+#
+# Scope decision (worth stating in interviews):
+#   A production Redis would use a StatefulSet with a PersistentVolumeClaim so
+#   that data survives pod restarts, and likely a Redis Sentinel or Cluster
+#   topology for HA.  This Deployment uses no persistent volume — a pod restart
+#   flushes the cache, which is acceptable here because:
+#     (a) Redis is a cache, not a store-of-record in this service
+#     (b) The app handles cache misses gracefully (falls back to Postgres)
+#     (c) This is a portfolio project; the goal is proving the multi-replica
+#         shared-cache pattern, not operating a production Redis cluster
+#   This is documented as a known simplification, not an oversight.
+#
+# Single replica: Redis itself doesn't need replicas here since it's a cache.
+# Only the API deployment needs multiple replicas (to prove the cache is shared
+# across replicas rather than per-pod).
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: feature-flag
+  labels:
+    app: redis
+    app.kubernetes.io/part-of: feature-flag-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          # Resource requests/limits: even rough values are required so the
+          # Kubernetes scheduler can make sensible placement decisions.
+          # A Deployment with no resource requests is an anti-pattern in
+          # production — the scheduler has no signal and may place the pod on
+          # an already-overloaded node.
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          # Readiness probe: confirm Redis is actually accepting connections
+          # before the Service routes traffic to this pod.
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3

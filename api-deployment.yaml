@@ -1,0 +1,137 @@
+# k8s/api-deployment.yaml
+#
+# Deployment for the feature-flag-service API.
+#
+# Key design decisions documented inline:
+#
+# IMAGE TAG — commit SHA, never `latest`
+#   `latest` is a mutable tag: it silently points to a different image after
+#   every CI push.  Using `latest` in a deployment manifest means two replicas
+#   started at different times could run different code without any visible
+#   signal.  The SHA tag is immutable — it always refers to exactly one build.
+#   Argo CD (next step) enforces this same policy in its sync configuration.
+#
+# REPLICAS: 2
+#   This is a hard requirement, not a preference.  The entire justification
+#   for choosing Redis over in-process caching (Step 6) is that in-process
+#   caches don't survive scaling: each replica would have its own isolated
+#   cache, so two requests for the same flag from the same user could get
+#   different `enabled` results depending on which replica handled each one.
+#   Redis solves this by being a shared cache outside the API processes.
+#   That design decision is only testable with replicas > 1.  Running with
+#   replicas: 1 here would make the Step 6 choice untestable in this environment.
+#
+# imagePullSecrets
+#   GHCR packages linked to a GitHub repo are private by default.  The kind
+#   cluster has no ambient GitHub credentials, so without imagePullSecrets
+#   every pod would fail immediately with ImagePullBackOff.
+#   `ghcr-pull-secret` is a docker-registry secret applied imperatively
+#   (see secret-template.yaml for the exact kubectl command).  The PAT used
+#   has only `read:packages` scope — minimum privilege.
+#
+# LIVENESS vs READINESS probes (both on /health)
+#   /health returns 200 when the DB is reachable, 503 when it isn't (Step 2).
+#   - Readiness (failureThreshold: 3): after 30s of 503s, stop routing traffic
+#     here.  This is the correct response to a DB outage: the pod is alive but
+#     can't usefully serve requests, so don't send it any.
+#   - Liveness (failureThreshold: 5): after 50s of 503s, restart the pod.
+#     More lenient because: if the DB is down, restarting the pod won't fix it
+#     — the pod will immediately fail again, potentially causing a restart loop
+#     (CrashLoopBackOff) that makes the situation harder to diagnose.  The
+#     lenient threshold gives the DB time to recover without triggering a
+#     cascade of unnecessary restarts.
+#   Known simplification: a production setup would have a separate /livez
+#   endpoint that checks only process health (not DB connectivity) for liveness,
+#   and reserve /health for readiness.  The lenient-threshold approach here is
+#   an honest trade-off documented explicitly rather than hidden.
+#
+# RESOURCE REQUESTS/LIMITS
+#   A Deployment without resource requests is a scheduler anti-pattern: the
+#   Kubernetes scheduler has no signal for placement decisions and may pack
+#   pods onto already-overloaded nodes.  These values are not precisely tuned
+#   (profiling under real load would be needed for that) but provide a
+#   reasonable starting point that avoids the worst-case scheduling behaviour.
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag
+  labels:
+    app: feature-flag-api
+    app.kubernetes.io/part-of: feature-flag-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feature-flag-api
+  template:
+    metadata:
+      labels:
+        app: feature-flag-api
+    spec:
+      # Authenticate to GHCR to pull the private image.
+      # Created imperatively: kubectl create secret docker-registry ghcr-pull-secret ...
+      # See k8s/secret-template.yaml for the exact command.
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+
+      containers:
+        - name: api
+          # Pinned to exact commit SHA — never `latest`.
+          # This SHA corresponds to the Step 9 CI push (HEAD of main at Step 10 time).
+          image: ghcr.io/dsurya11/feature-flag-service:44d831f9fc3cd1f94371f730b13f3f31a81fc575
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+
+          # Sensitive config sourced from the feature-flag-secrets Secret.
+          # envFrom injects all keys as environment variables.
+          # Real values never appear in this manifest — they live only in the
+          # cluster's etcd (encrypted at rest) after being applied imperatively.
+          envFrom:
+            - secretRef:
+                name: feature-flag-secrets
+
+          # Non-sensitive config set directly — these have no security implications.
+          env:
+            - name: JWT_ALGORITHM
+              value: "HS256"
+            - name: JWT_EXPIRE_MINUTES
+              value: "30"
+            - name: CACHE_TTL_SECONDS
+              value: "10"
+
+          # Readiness probe — strict (failureThreshold: 3)
+          # 503 from /health means DB is unreachable → stop routing traffic here.
+          # initialDelaySeconds: 10 gives the app time to complete its startup
+          # DB + Redis connectivity checks before Kubernetes starts evaluating it.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+          # Liveness probe — lenient (failureThreshold: 5)
+          # initialDelaySeconds: 15 to avoid premature restarts during cold start.
+          # Higher failureThreshold than readiness: allows DB blips to resolve
+          # without triggering unnecessary pod restarts.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

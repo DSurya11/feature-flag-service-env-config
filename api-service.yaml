@@ -1,0 +1,36 @@
+# k8s/api-service.yaml
+#
+# ClusterIP Service for the feature-flag API.
+#
+# Why ClusterIP?
+#   The API is not yet exposed outside the cluster — that happens later via
+#   an Ingress or a LoadBalancer Service once a proper ingress controller
+#   (e.g. ingress-nginx) is set up.  ClusterIP is the correct default: it
+#   gives the API a stable virtual IP and DNS name inside the cluster, allows
+#   kube-proxy to load-balance across both replicas, and keeps the attack
+#   surface minimal.
+#
+# DNS name created:
+#   feature-flag-api.feature-flag.svc.cluster.local:8000
+#
+# This is what the in-cluster curl-test pod uses to reach the API and exercise
+# real kube-proxy load-balancing across both replicas (see verification steps
+# in the README).  port-forward is deliberately NOT used for that test because
+# port-forward binds to a single pod for its lifetime, bypassing load-balancing.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag
+  labels:
+    app: feature-flag-api
+    app.kubernetes.io/part-of: feature-flag-service
+spec:
+  selector:
+    app: feature-flag-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
