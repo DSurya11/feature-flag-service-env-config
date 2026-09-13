@@ -80,7 +80,7 @@ spec:
         - name: api
           # Pinned to exact commit SHA — never `latest`.
           # This SHA corresponds to the Step 9 CI push (HEAD of main at Step 10 time).
-          image: ghcr.io/dsurya11/feature-flag-service:44d831f9fc3cd1f94371f730b13f3f31a81fc575
+          image: ghcr.io/dsurya11/feature-flag-service:ca81c54c00986fa93d46500f717213d75ee4e24b
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
