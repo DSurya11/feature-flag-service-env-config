@@ -61,7 +61,7 @@ metadata:
     app: feature-flag-api
     app.kubernetes.io/part-of: feature-flag-service
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: feature-flag-api
