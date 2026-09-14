@@ -85,7 +85,7 @@ spec:
             runAsNonRoot: true
           # Pinned to exact commit SHA — never `latest`.
           # This SHA corresponds to the Step 9 CI push (HEAD of main at Step 10 time).
-          image: ghcr.io/dsurya11/feature-flag-service:d32ec10468b1263cd67b61b8e7ca1d67959e0c71
+          image: ghcr.io/dsurya11/feature-flag-service:e677415f50d8fdbd329ba4789ce842425522d459
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
