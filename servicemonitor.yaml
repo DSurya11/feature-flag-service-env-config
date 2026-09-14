@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: feature-flag-api
+  namespaceSelector:
+    matchNames:
+      - feature-flag
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
