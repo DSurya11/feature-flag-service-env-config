@@ -76,8 +76,12 @@ spec:
       imagePullSecrets:
         - name: ghcr-pull-secret
 
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: api
+          securityContext:
+            runAsNonRoot: true
           # Pinned to exact commit SHA — never `latest`.
           # This SHA corresponds to the Step 9 CI push (HEAD of main at Step 10 time).
           image: ghcr.io/dsurya11/feature-flag-service:7dfd0eedffda6aa966ad6526f96a4e89d56be7c0
