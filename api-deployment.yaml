@@ -78,6 +78,7 @@ spec:
 
       securityContext:
         runAsNonRoot: true
+        runAsUser: 999
       containers:
         - name: api
           securityContext:
