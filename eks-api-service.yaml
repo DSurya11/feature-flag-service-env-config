@@ -1,0 +1,19 @@
+# =============================================================================
+# Service: feature-flag-api (feature-flag-dev)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag-dev
+  labels:
+    app: feature-flag-api
+    app.kubernetes.io/part-of: feature-flag-service
+spec:
+  selector:
+    app: feature-flag-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP

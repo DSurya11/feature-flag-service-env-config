@@ -1,0 +1,48 @@
+# =============================================================================
+# Ingress: feature-flag-api (feature-flag-dev)
+#
+# Uses AWS Load Balancer Controller (installed in kube-system via Helm).
+# Provisions ONE shared ALB via alb.ingress.kubernetes.io/group.name.
+#
+# ONE SHARED ALB DESIGN:
+#   Each separate Ingress without a group creates its own ALB at $0.0239/hr.
+#   Three environments (dev/staging/prod) without grouping = 3x the cost.
+#   With group.name: ff-idp, all Ingresses share one ALB — path-based routing.
+#   Cost: $0.0239/hr for 1 ALB regardless of how many Ingresses join the group.
+#
+# NO DOMAIN:
+#   Production would use ACM + Route53 with HTTPS. Deferred.
+#   Access via ALB DNS name directly (shown in 'make up' output after Step 27).
+#   ALB DNS format: k8s-ffidp-<hash>.ap-south-1.elb.amazonaws.com
+#
+# TARGET TYPE: ip (not instance)
+#   ip mode routes directly to pod IPs (bypasses kube-proxy NodePort).
+#   Requires vpc-cni (installed as EKS addon). Healthier path, lower latency.
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag-dev
+  annotations:
+    alb.ingress.kubernetes.io/group.name: ff-idp
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    # Health check on /health — returns 200 when DB is up
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "30"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: feature-flag-api
+                port:
+                  number: 8000

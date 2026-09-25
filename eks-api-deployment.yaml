@@ -1,0 +1,105 @@
+# =============================================================================
+# Deployment: feature-flag-api (EKS / feature-flag-dev)
+#
+# KEY CHANGES FROM KIND VERSION:
+#   - namespace: feature-flag-dev (not feature-flag)
+#   - image: ECR (not GHCR) — no imagePullSecrets needed (node IAM role allows ECR pull)
+#   - REDIS_URL: points at ElastiCache Valkey endpoint (not in-cluster redis pod)
+#   - DATABASE_URL + JWT_SECRET_KEY: from ESO-synced K8s Secret (not imperative secret)
+#   - No imagePullSecrets block — EKS nodes have AmazonEC2ContainerRegistryReadOnly
+#     attached, so they can pull from ECR in the same account without extra credentials.
+#
+# LATENCY A/B NOTE (Step 16 finding):
+#   p95 was ~0.97s against Neon (WAN + TLS + pooler hop).
+#   This deployment uses RDS in the same VPC — same code, one variable changed.
+#   Measure p95 from Prometheus after this deploys. If it collapses to <10ms,
+#   WAN RTT was the root cause. If it stays high, it's SQLAlchemy pool handling.
+#
+# IMAGE SHA: Updated automatically by CI (GitHub App bot commit to this repo).
+#   The placeholder below is replaced within ~5 min of each push to main.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-flag-api
+  namespace: feature-flag-dev
+  labels:
+    app: feature-flag-api
+    app.kubernetes.io/part-of: feature-flag-service
+    environment: dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feature-flag-api
+  template:
+    metadata:
+      labels:
+        app: feature-flag-api
+        app.kubernetes.io/part-of: feature-flag-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999     # appuser from Dockerfile non-root hardening (Step 8)
+
+      containers:
+        - name: api
+          # ECR image — SHA updated by CI bot after each push to main.
+          # No imagePullSecrets: EKS node IAM role (AmazonEC2ContainerRegistryReadOnly)
+          # grants pull access automatically. Never use :latest.
+          image: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service:94d7d0c2f358a5c516beb574ee4167e93aae9cc5
+          imagePullPolicy: Always
+
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+
+          ports:
+            - containerPort: 8000
+              name: http
+
+          # DATABASE_URL and JWT_SECRET_KEY from ESO-synced Secret.
+          # No kind:Secret in Git — structurally eliminates the Step 13 GitOps trap.
+          envFrom:
+            - secretRef:
+                name: feature-flag-secrets
+
+          env:
+            - name: JWT_ALGORITHM
+              value: "HS256"
+            - name: JWT_EXPIRE_MINUTES
+              value: "30"
+            - name: CACHE_TTL_SECONDS
+              value: "10"
+            # Valkey endpoint (same Redis protocol, ~20% cheaper than Redis)
+            - name: REDIS_URL
+              value: "redis://ff-idp-valkey.cvjcsp.ng.0001.aps1.cache.amazonaws.com:6379"
+
+          # Readiness: strict — 3 failures → stop routing traffic here
+          # /health returns 503 when DB is unreachable (Step 2)
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+          # Liveness: lenient — 5 failures → restart pod
+          # More lenient than readiness: DB outage shouldn't cause restart storm
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
