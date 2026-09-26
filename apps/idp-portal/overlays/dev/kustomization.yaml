@@ -1,0 +1,9 @@
+# idp-portal in the dev cluster. CI (idp-portal repo) rewrites newTag on every push to main.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: backstage
+resources:
+  - ../../base
+images:
+  - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/idp-portal
+    newTag: set-by-ci

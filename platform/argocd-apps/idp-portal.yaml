@@ -1,0 +1,26 @@
+# App-of-apps child: Backstage (idp-portal). Wave 1, after platform-cluster (the
+# ClusterSecretStore its ExternalSecret needs). Automated like feature-flag-dev.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idp-portal
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/DSurya11/feature-flag-service-env-config
+    targetRevision: HEAD
+    path: apps/idp-portal/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backstage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

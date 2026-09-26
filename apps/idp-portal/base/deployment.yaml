@@ -1,0 +1,62 @@
+# Backstage (idp-portal). One replica: it is an internal tool reached by one person via
+# port-forward; a second replica would cost ~512Mi on nodes that have little spare.
+#
+# ACCESS: no Ingress on purpose. Backstage must know its own URL (app.baseUrl), the ALB
+# hostname changes every session, and guest sign-in is only acceptable when not exposed:
+#   kubectl port-forward svc/idp-portal -n backstage 7007:7007  ->  http://localhost:7007
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idp-portal
+  labels:
+    app: idp-portal
+    app.kubernetes.io/part-of: ff-idp-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"   # after the ExternalSecret (wave 0)
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: idp-portal
+  template:
+    metadata:
+      labels:
+        app: idp-portal
+        app.kubernetes.io/part-of: ff-idp-platform
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000          # "node" user in the node:24 base image
+      containers:
+        - name: backstage
+          image: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/idp-portal:set-by-ci
+          ports:
+            - containerPort: 7007
+              name: http
+          envFrom:
+            - secretRef:
+                name: idp-portal-db
+          env:
+            # Keep V8's heap under the container limit so Node GCs instead of being OOM-killed.
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=768"
+          securityContext:
+            allowPrivilegeEscalation: false
+          # First start runs catalog/scaffolder DB migrations; allow up to 5 minutes.
+          startupProbe:
+            httpGet: {path: /.backstage/health/v1/liveness, port: 7007}
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /.backstage/health/v1/readiness, port: 7007}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /.backstage/health/v1/liveness, port: 7007}
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

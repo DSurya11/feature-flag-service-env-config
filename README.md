@@ -8,7 +8,9 @@ platform/
   argocd-apps/      App-of-apps: the root Application (created by ff-idp-infra/40-platform)
                     syncs every Application in here.
     platform-cluster.yaml   wave 0 -> platform/cluster
-    feature-flag-dev.yaml   wave 1 -> apps/feature-flag-service/overlays/dev
+    feature-flag-dev.yaml   wave 1 -> apps/idp-portal/          Backstage. Image from github.com/DSurya11/idp-portal CI.
+apps/feature-flag-service/overlays/dev
+    idp-portal.yaml         wave 1 -> apps/idp-portal/overlays/dev (Backstage, port-forward only)
   cluster/          ClusterSecretStore (ESO -> AWS Secrets Manager, via IRSA)
   kyverno/          Policies. NOT synced until Kyverno is installed (Step 33).
 apps/feature-flag-service/
