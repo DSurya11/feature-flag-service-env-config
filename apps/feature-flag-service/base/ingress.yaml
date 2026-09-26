@@ -25,6 +25,9 @@ metadata:
   name: feature-flag-api
   annotations:
     alb.ingress.kubernetes.io/group.name: ff-idp
+    # This Ingress is the catch-all "/". Lower group.order = evaluated first, so it goes
+    # LAST: golden-path services (group.order 10, path /<name>) must match before it.
+    alb.ingress.kubernetes.io/group.order: "1000"
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'

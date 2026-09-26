@@ -36,6 +36,8 @@ spec:
           envFrom:
             - secretRef:
                 name: idp-portal-db
+            - secretRef:
+                name: idp-portal-github
           env:
             # Keep V8's heap under the container limit so Node GCs instead of being OOM-killed.
             - name: NODE_OPTIONS
