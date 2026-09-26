@@ -47,7 +47,7 @@ spec:
           # ECR image — SHA updated by CI bot after each push to main.
           # No imagePullSecrets: EKS node IAM role (AmazonEC2ContainerRegistryReadOnly)
           # grants pull access automatically. Never use :latest.
-          image: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service:6fee1b99c4f4c3458bc1763d2d8de709a352d3d8
+          image: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service:ff1e4b6262caeafc253fd9fb26302a346161c79d
           imagePullPolicy: Always
 
           securityContext:
