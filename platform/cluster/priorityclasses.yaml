@@ -1,0 +1,16 @@
+# Scheduling priority for user-facing workloads.
+#
+# Default pods have priority 0, the lowest in the cluster. When a node is lost or
+# drained and memory runs short, the scheduler PREEMPTS the lowest-priority pods to
+# place higher-priority ones - and preemption ignores PodDisruptionBudgets. With the API
+# at 0, a drain on 2x t4g.small preempted both API replicas at once (Step 28, 82 failed
+# requests). This class ranks the API above ordinary platform pods (Argo CD UI, etc.),
+# still below system-cluster-critical (2e9) and system-node-critical.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: business-critical
+value: 1000000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: "User-facing services: preempted after non-critical platform pods."

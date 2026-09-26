@@ -56,6 +56,18 @@ spec:
         app.kubernetes.io/part-of: feature-flag-service
     spec:
       terminationGracePeriodSeconds: 40   # preStop 20s + uvicorn graceful shutdown
+      # platform/cluster/priorityclasses.yaml: preempted after non-critical platform pods.
+      priorityClassName: business-critical
+      # Replicas in different AZs (= different nodes here), so one node or zone loss
+      # never takes every replica. ScheduleAnyway: during a drain on a 2-node cluster a
+      # replacement must still be allowed onto the remaining node rather than stay Pending.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: feature-flag-api
       securityContext:
         runAsNonRoot: true
         runAsUser: 999     # appuser from Dockerfile non-root hardening (Step 8)
