@@ -4,6 +4,9 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: feature-flag-api
+  annotations:
+    # Wave 3, after the Deployment (wave 2): a PDB with no matching pods may report unhealthy, which would block earlier waves.
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   minAvailable: 1
   selector:

@@ -5,6 +5,10 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: feature-flag-api
+  annotations:
+    # Wave 3, after the Deployment (wave 2): an HPA whose Deployment does not exist yet is Degraded, and Argo CD waits for each
+    # # wave to be Healthy - in wave 0 it blocked the Deployment (wave 2) forever.
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

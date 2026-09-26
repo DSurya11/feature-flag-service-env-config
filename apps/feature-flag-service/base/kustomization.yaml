@@ -5,6 +5,7 @@
 #   wave 0  ExternalSecret, Service, Ingress   (ESO creates feature-flag-secrets)
 #   wave 1  migrate-job.yaml                   (Sync hook: alembic upgrade head)
 #   wave 2  deployment.yaml                    (starts only once the schema exists)
+#   wave 3  hpa.yaml, pdb.yaml                 (need the Deployment to exist to be Healthy)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
