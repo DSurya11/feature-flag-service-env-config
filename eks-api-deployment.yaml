@@ -4,7 +4,7 @@
 # KEY CHANGES FROM KIND VERSION:
 #   - namespace: feature-flag-dev (not feature-flag)
 #   - image: ECR (not GHCR) — no imagePullSecrets needed (node IAM role allows ECR pull)
-#   - REDIS_URL: points at ElastiCache Valkey endpoint (not in-cluster redis pod)
+#   - REDIS_URL: ElastiCache Valkey endpoint, synced by ESO from ff-idp/valkey
 #   - DATABASE_URL + JWT_SECRET_KEY: from ESO-synced K8s Secret (not imperative secret)
 #   - No imagePullSecrets block — EKS nodes have AmazonEC2ContainerRegistryReadOnly
 #     attached, so they can pull from ECR in the same account without extra credentials.
@@ -71,9 +71,8 @@ spec:
               value: "30"
             - name: CACHE_TTL_SECONDS
               value: "10"
-            # Valkey endpoint (same Redis protocol, ~20% cheaper than Redis)
-            - name: REDIS_URL
-              value: "redis://ff-idp-valkey.cvjcsp.ng.0001.aps1.cache.amazonaws.com:6379"
+            # REDIS_URL comes from the ESO-synced Secret (envFrom above): the Valkey
+            # endpoint hash changes every time the cluster layer is recreated.
 
           # Readiness: strict — 3 failures → stop routing traffic here
           # /health returns 503 when DB is unreachable (Step 2)
