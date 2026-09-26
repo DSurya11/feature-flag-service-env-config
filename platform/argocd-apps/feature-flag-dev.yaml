@@ -26,9 +26,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # No ServerSideApply here: Argo CD v2.13's embedded schema predates Kubernetes 1.33's
+    # Deployment .status.terminatingReplicas, so the server-side (structured merge) diff
+    # fails with "field not declared in schema" and auto-sync silently stops.
+    # Client-side apply has no such dependency. Upgrading Argo CD removes the need for this.
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
     managedNamespaceMetadata:
       labels:
         app.kubernetes.io/part-of: feature-flag-service
