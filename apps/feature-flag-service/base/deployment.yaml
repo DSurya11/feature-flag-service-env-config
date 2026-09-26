@@ -22,7 +22,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: feature-flag-api
-  namespace: feature-flag-dev
   labels:
     app: feature-flag-api
     app.kubernetes.io/part-of: feature-flag-service

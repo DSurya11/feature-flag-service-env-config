@@ -23,7 +23,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: feature-flag-api
-  namespace: feature-flag-dev
   annotations:
     alb.ingress.kubernetes.io/group.name: ff-idp
     alb.ingress.kubernetes.io/scheme: internet-facing

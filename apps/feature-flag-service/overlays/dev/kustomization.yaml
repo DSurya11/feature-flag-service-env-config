@@ -1,0 +1,18 @@
+# dev: the only environment deployed today. Automated sync (any merge to main deploys).
+# CI rewrites newTag below on every push to Feature-Flag-Service main; the images
+# entry covers both the Deployment and the migration Job (same image name).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: feature-flag-dev
+resources:
+  - ../../base
+labels:
+  - pairs:
+      environment: dev
+    includeSelectors: false
+replicas:
+  - name: feature-flag-api
+    count: 2
+images:
+  - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service
+    newTag: d3da9d11272d14571403cf79861f547d1079d372

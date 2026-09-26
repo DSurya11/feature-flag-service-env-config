@@ -1,0 +1,10 @@
+# Keep at least 2 of 3 replicas up during voluntary disruptions (node drains, upgrades).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: feature-flag-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: feature-flag-api

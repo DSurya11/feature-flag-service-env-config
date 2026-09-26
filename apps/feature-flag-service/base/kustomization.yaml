@@ -1,0 +1,15 @@
+# Base for feature-flag-service: everything an environment needs, with no namespace,
+# replica count or image tag decided here. Overlays (dev/staging/prod) own those.
+#
+# Sync order inside an environment (Argo CD sync waves, set on the resources):
+#   wave 0  ExternalSecret, Service, Ingress   (ESO creates feature-flag-secrets)
+#   wave 1  migrate-job.yaml                   (Sync hook: alembic upgrade head)
+#   wave 2  deployment.yaml                    (starts only once the schema exists)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - externalsecret.yaml
+  - migrate-job.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml

@@ -1,0 +1,24 @@
+# staging: DEFINED BUT NOT DEPLOYED. No Argo CD Application points here yet.
+#
+# Deploying it for real needs, beyond enabling an Application:
+#   - its own database (today every overlay reads ff-idp/db-creds, i.e. dev's DB)
+#   - a distinct Ingress rule: all envs join ALB group "ff-idp" with path "/", which
+#     would collide. Needs a host rule (domain + ACM, deferred) or listener-port split.
+#   - more node capacity (2x t4g.small is sized for dev only)
+# Promotion model: dev auto-syncs; staging gets a new tag only via a promotion PR that
+# copies dev's newTag here.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: feature-flag-staging
+resources:
+  - ../../base
+labels:
+  - pairs:
+      environment: staging
+    includeSelectors: false
+replicas:
+  - name: feature-flag-api
+    count: 2
+images:
+  - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service
+    newTag: d3da9d11272d14571403cf79861f547d1079d372

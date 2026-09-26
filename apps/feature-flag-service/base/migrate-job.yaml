@@ -22,7 +22,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: feature-flag-db-migrate
-  namespace: feature-flag-dev
   labels:
     app: feature-flag-db-migrate
     app.kubernetes.io/part-of: feature-flag-service
