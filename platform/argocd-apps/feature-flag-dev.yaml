@@ -36,3 +36,7 @@ spec:
       labels:
         app.kubernetes.io/part-of: feature-flag-service
         environment: dev
+        # ALB controller injects a readiness gate into pods in this namespace: a pod is
+        # only Ready once its ALB target is healthy. Needed for zero-downtime rollouts.
+        # Must exist before pods are created (the webhook acts at pod creation).
+        elbv2.k8s.aws/pod-readiness-gate-inject: enabled

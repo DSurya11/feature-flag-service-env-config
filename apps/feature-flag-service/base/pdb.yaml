@@ -1,0 +1,11 @@
+# Voluntary disruptions (node drain, node group upgrade) may never take the API to zero.
+# Overlays raise this where there are more replicas (prod: 2 of min 3).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: feature-flag-api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: feature-flag-api

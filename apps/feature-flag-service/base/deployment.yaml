@@ -30,7 +30,22 @@ metadata:
     # Wave 2: start only after the migration Job (wave 1) has created the schema.
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  replicas: 2
+  # No `replicas` here: the HorizontalPodAutoscaler (hpa.yaml) owns the count. A value
+  # in Git would make Argo CD selfHeal fight the HPA on every scale event.
+  #
+  # ZERO-DOWNTIME ROLLOUT (Step 28) - four pieces that only work together:
+  #   1. maxUnavailable 0: a new pod must be Ready before an old one is removed.
+  #   2. ALB pod readiness gate (namespace label, set by the Argo Application): "Ready"
+  #      also requires the ALB to report the new pod's target healthy, so traffic can
+  #      actually reach it before the old pod goes.
+  #   3. preStop sleep 20s > ALB deregistration delay (10s, ingress.yaml): the old pod
+  #      keeps serving while the ALB drains it, instead of refusing in-flight requests.
+  #   4. PodDisruptionBudget (pdb.yaml): node drains cannot take all replicas at once.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: feature-flag-api
@@ -40,6 +55,7 @@ spec:
         app: feature-flag-api
         app.kubernetes.io/part-of: feature-flag-service
     spec:
+      terminationGracePeriodSeconds: 40   # preStop 20s + uvicorn graceful shutdown
       securityContext:
         runAsNonRoot: true
         runAsUser: 999     # appuser from Dockerfile non-root hardening (Step 8)
@@ -59,6 +75,11 @@ spec:
           ports:
             - containerPort: 8000
               name: http
+
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "20"]
 
           # DATABASE_URL and JWT_SECRET_KEY from ESO-synced Secret.
           # No kind:Secret in Git — structurally eliminates the Step 13 GitOps trap.

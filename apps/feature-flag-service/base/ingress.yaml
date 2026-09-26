@@ -33,6 +33,9 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: "30"
     alb.ingress.kubernetes.io/healthy-threshold-count: "2"
     alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+    # Drain window when a pod is removed. Default is 300s, which makes every rollout
+    # and scale-in wait 5 min per pod. Must stay below the pod's preStop sleep (20s).
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=10
 spec:
   ingressClassName: alb
   rules:

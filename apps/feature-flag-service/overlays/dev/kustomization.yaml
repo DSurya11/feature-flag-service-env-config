@@ -10,9 +10,18 @@ labels:
   - pairs:
       environment: dev
     includeSelectors: false
-replicas:
-  - name: feature-flag-api
-    count: 2
+# Replica count is owned by the HPA; overlays set its bounds.
+patches:
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: feature-flag-api
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 4
 images:
   - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service
     newTag: d7fabd509ae84b1dd3b51cf5ca570e58d73a0811

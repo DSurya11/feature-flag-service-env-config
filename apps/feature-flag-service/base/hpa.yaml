@@ -1,0 +1,24 @@
+# Scales feature-flag-api on CPU (needs metrics-server: EKS add-on in 30-cluster).
+# Utilization is measured against the container's CPU *request* (100m), so 70% = 70m.
+# Overlays patch min/max per environment.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: feature-flag-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: feature-flag-api
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 120   # avoid flapping after a load burst
