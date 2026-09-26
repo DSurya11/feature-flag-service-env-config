@@ -4,7 +4,7 @@
 # KEY CHANGES FROM KIND VERSION:
 #   - namespace: feature-flag-dev (not feature-flag)
 #   - image: ECR (not GHCR) — no imagePullSecrets needed (node IAM role allows ECR pull)
-#   - REDIS_URL: ElastiCache Valkey endpoint, synced by ESO from ff-idp/valkey
+#   - REDIS_URL: ElastiCache Valkey endpoint, synced by ESO from idp/valkey
 #   - DATABASE_URL + JWT_SECRET_KEY: from ESO-synced K8s Secret (not imperative secret)
 #   - No imagePullSecrets block — EKS nodes have AmazonEC2ContainerRegistryReadOnly
 #     attached, so they can pull from ECR in the same account without extra credentials.

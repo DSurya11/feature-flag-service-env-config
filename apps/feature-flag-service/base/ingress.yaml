@@ -7,7 +7,7 @@
 # ONE SHARED ALB DESIGN:
 #   Each separate Ingress without a group creates its own ALB at $0.0239/hr.
 #   Three environments (dev/staging/prod) without grouping = 3x the cost.
-#   With group.name: ff-idp, all Ingresses share one ALB — path-based routing.
+#   With group.name: idp, all Ingresses share one ALB — path-based routing.
 #   Cost: $0.0239/hr for 1 ALB regardless of how many Ingresses join the group.
 #
 # NO DOMAIN:
@@ -24,7 +24,7 @@ kind: Ingress
 metadata:
   name: feature-flag-api
   annotations:
-    alb.ingress.kubernetes.io/group.name: ff-idp
+    alb.ingress.kubernetes.io/group.name: idp
     # This Ingress is the catch-all "/". Lower group.order = evaluated first, so it goes
     # LAST: golden-path services (group.order 10, path /<name>) must match before it.
     alb.ingress.kubernetes.io/group.order: "1000"

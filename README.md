@@ -1,11 +1,11 @@
-# feature-flag-service-env-config
+# idp-gitops
 
-GitOps source of truth for the ff-idp EKS cluster. Argo CD watches this repo; nothing is
+GitOps source of truth for the IDP EKS cluster. Argo CD watches this repo; nothing is
 applied by hand.
 
 ```
 platform/
-  argocd-apps/      App-of-apps: the root Application (created by ff-idp-infra/40-platform)
+  argocd-apps/      App-of-apps: the root Application (created by idp-infra/40-platform)
                     syncs every Application in here.
     platform-cluster.yaml   wave 0 -> platform/cluster
     feature-flag-dev.yaml   wave 1 -> apps/idp-portal/          Backstage. Image from github.com/DSurya11/idp-portal CI.
@@ -21,6 +21,6 @@ apps/feature-flag-service/
 ```
 
 No `kind: Secret` lives in this repo: ESO creates `feature-flag-secrets` at runtime from
-AWS Secrets Manager (`ff-idp/db-creds`, `ff-idp/jwt-secret`, `ff-idp/valkey`).
+AWS Secrets Manager (`idp/db-creds`, `idp/jwt-secret`, `idp/valkey`).
 
 Render locally: `kubectl kustomize apps/feature-flag-service/overlays/dev`

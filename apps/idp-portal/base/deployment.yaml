@@ -10,7 +10,7 @@ metadata:
   name: idp-portal
   labels:
     app: idp-portal
-    app.kubernetes.io/part-of: ff-idp-platform
+    app.kubernetes.io/part-of: idp-platform
   annotations:
     argocd.argoproj.io/sync-wave: "1"   # after the ExternalSecret (wave 0)
 spec:
@@ -22,7 +22,7 @@ spec:
     metadata:
       labels:
         app: idp-portal
-        app.kubernetes.io/part-of: ff-idp-platform
+        app.kubernetes.io/part-of: idp-platform
     spec:
       securityContext:
         runAsNonRoot: true
