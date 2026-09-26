@@ -1,0 +1,64 @@
+# =============================================================================
+# Job: feature-flag-db-migrate (EKS / feature-flag-dev)
+#
+# Runs `alembic upgrade head` on every Argo CD sync. A fresh RDS (recreated every
+# session under the destroy-every-session lifecycle) has no schema, and the app does
+# not migrate itself, so without this the API returns 500s until someone runs
+# alembic by hand.
+#
+# ORDERING (Argo CD sync waves):
+#   wave 0  Namespace, ClusterSecretStore, ExternalSecret  (creates feature-flag-secrets)
+#   wave 1  THIS JOB  (needs DATABASE_URL from that secret; Argo waits for wave 0 Healthy)
+#   wave 2  Deployment  (starts only after the schema exists)
+#
+# It is a Sync hook (not PreSync): PreSync would run before the ExternalSecret exists,
+# so the secret would be missing on the first sync of a new cluster.
+# `alembic upgrade head` is idempotent, so re-running on later syncs is a no-op.
+#
+# The image tag is bumped by CI together with eks-api-deployment.yaml so the migration
+# always matches the code being deployed.
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: feature-flag-db-migrate
+  namespace: feature-flag-dev
+  labels:
+    app: feature-flag-db-migrate
+    app.kubernetes.io/part-of: feature-flag-service
+    environment: dev
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: feature-flag-db-migrate
+        app.kubernetes.io/part-of: feature-flag-service
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      containers:
+        - name: migrate
+          image: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service:eb2c92204b342ef99c61b1ecbb7f27170b785c86
+          workingDir: /app
+          command: ["alembic", "upgrade", "head"]
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          envFrom:
+            - secretRef:
+                name: feature-flag-secrets
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

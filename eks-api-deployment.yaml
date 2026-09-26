@@ -27,6 +27,9 @@ metadata:
     app: feature-flag-api
     app.kubernetes.io/part-of: feature-flag-service
     environment: dev
+  annotations:
+    # Wave 2: start only after the migration Job (wave 1) has created the schema.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   replicas: 2
   selector:
