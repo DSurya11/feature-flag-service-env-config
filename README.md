@@ -10,7 +10,6 @@ platform/
     platform-cluster.yaml   wave 0 -> platform/cluster
     feature-flag-dev.yaml   wave 1 -> apps/feature-flag-service/overlays/dev
     idp-portal.yaml         wave 1 -> apps/idp-portal/overlays/dev (Backstage, port-forward only)
-    hello-svc.yaml          wave 1 -> apps/hello-svc/overlays/dev (first golden-path service)
   cluster/          ClusterSecretStore (ESO -> AWS Secrets Manager, via IRSA), PriorityClass
   kyverno/          Policies. NOT synced until Kyverno is installed (Step 33).
 apps/feature-flag-service/
