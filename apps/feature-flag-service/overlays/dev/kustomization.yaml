@@ -24,4 +24,4 @@ patches:
         value: 4
 images:
   - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/feature-flag-service
-    newTag: dc2311b5756c05fce7a0f55cd139b94949247034
+    newTag: 651344acfb11aa08baf40035d8015b6ffc07056b
