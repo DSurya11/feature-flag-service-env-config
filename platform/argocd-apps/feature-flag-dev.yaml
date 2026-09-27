@@ -16,7 +16,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/DSurya11/idp-gitops
+    repoURL: https://github.com/surya-idp/idp-gitops
     targetRevision: HEAD
     path: apps/feature-flag-service/overlays/dev
   destination:

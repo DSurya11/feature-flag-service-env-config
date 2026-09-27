@@ -17,7 +17,7 @@ apps/feature-flag-service/
   overlays/dev/     DEPLOYED, automated sync. CI updates newTag here.
   overlays/staging/ Defined, not deployed.
   overlays/prod/    Defined, not deployed. Manual sync when enabled. PDB minAvailable 2.
-apps/idp-portal/    Backstage (image from github.com/DSurya11/idp-portal CI)
+apps/idp-portal/    Backstage (image from github.com/surya-idp/idp-portal CI)
 apps/<service>/     added by the Backstage python-service template
 scripts/validate.sh render every overlay + schema-check it (CI required check)
 ```

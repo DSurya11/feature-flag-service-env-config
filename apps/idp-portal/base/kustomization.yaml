@@ -1,4 +1,4 @@
-# Backstage (idp-portal). Image built by github.com/DSurya11/idp-portal CI.
+# Backstage (idp-portal). Image built by github.com/surya-idp/idp-portal CI.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
