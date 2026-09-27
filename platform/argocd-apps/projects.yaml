@@ -32,7 +32,7 @@ metadata:
 spec:
   description: Cluster-wide platform config (ClusterSecretStore, PriorityClasses)
   sourceRepos:
-    - https://github.com/DSurya11/idp-gitops
+    - https://github.com/surya-idp/idp-gitops
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
@@ -52,7 +52,7 @@ metadata:
 spec:
   description: Application workloads (dev); one namespace per service
   sourceRepos:
-    - https://github.com/DSurya11/idp-gitops
+    - https://github.com/surya-idp/idp-gitops
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "!kube-*"
