@@ -6,4 +6,4 @@ resources:
   - ../../base
 images:
   - name: 693906847772.dkr.ecr.ap-south-1.amazonaws.com/idp-portal
-    newTag: a3d4ee6c09a323469387be5d60281c7f068f4370
+    newTag: 4aad12878021d77b7dfb3666f98022ed450f43b9
